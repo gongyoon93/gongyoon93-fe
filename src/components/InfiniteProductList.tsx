@@ -3,13 +3,18 @@ import styled from 'styled-components';
 import { Product } from '../types/product';
 import ProductItem from './ProductItem';
 
-type ProductListProps = {
-  products: Product[];
+export type InfiniteProductListProps = {
+  pages: {
+    data: {
+      products: Product[];
+      totalCount: number;
+    };
+  };
 };
 
-const ProductList = ({ products }: ProductListProps) => (
+const ProductList = ({ pages }: InfiniteProductListProps) => (
   <Container>
-    {products?.map((product) => (
+    {pages?.data?.products?.map((product) => (
       <ProductItem key={product.id} product={product} />
     ))}
   </Container>
