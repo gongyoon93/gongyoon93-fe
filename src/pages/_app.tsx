@@ -2,18 +2,42 @@ import type { AppProps } from 'next/app';
 import styled from 'styled-components';
 
 import setupMSW from '../api/setup';
-import GlobalStyle from '../styles/GlobalStyle';
+import { RecoilRoot } from 'recoil';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from 'styled-components';
+import Auth from 'src/components/hoc/Auth';
+import { GlobalStyle, style } from 'src/lib/styled';
+import { useState } from 'react';
 
 setupMSW();
 
 function MyApp({ Component, pageProps }: AppProps) {
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            retry: 0,
+            staleTime: 600 * 1000,
+          },
+        },
+      })
+  );
   return (
     <>
-      <GlobalStyle />
-      <Background />
-      <Content>
-        <Component {...pageProps} />
-      </Content>
+      <RecoilRoot>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider theme={style}>
+            <GlobalStyle />
+            <Background />
+            <Content>
+              <Auth>
+                <Component {...pageProps} />
+              </Auth>
+            </Content>
+          </ThemeProvider>
+        </QueryClientProvider>
+      </RecoilRoot>
     </>
   );
 }

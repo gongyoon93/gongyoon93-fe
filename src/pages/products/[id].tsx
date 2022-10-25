@@ -1,27 +1,24 @@
-import Link from 'next/link';
-import type { NextPage } from 'next';
+import type { GetServerSidePropsContext, NextPage } from 'next';
 import React from 'react';
 import styled from 'styled-components';
+import Header from '../../components/Header';
 
-import products from '../../api/data/products.json';
+import { api } from 'src/lib/http';
 
-const ProductDetailPage: NextPage = () => {
-  const product = products[0];
+import { Product } from 'src/types/product';
 
+interface ProductDetailProps {
+  item: Product;
+}
+
+const ProductDetailPage: NextPage<ProductDetailProps> = ({ item }) => {
   return (
     <>
-      <Header>
-        <Link href='/'>
-          <Title>HAUS</Title>
-        </Link>
-        <Link href='/login'>
-          <p>login</p>
-        </Link>
-      </Header>
-      <Thumbnail src={product.thumbnail ? product.thumbnail : '/defaultThumbnail.jpg'} />
+      <Header />
+      <Thumbnail src={item.thumbnail ? item.thumbnail : '/defaultThumbnail.jpg'} />
       <ProductInfoWrapper>
-        <Name>{product.name}</Name>
-        <Price>{product.price}원</Price>
+        <Name>{item.name}</Name>
+        <Price>{item.price}원</Price>
       </ProductInfoWrapper>
     </>
   );
@@ -29,16 +26,21 @@ const ProductDetailPage: NextPage = () => {
 
 export default ProductDetailPage;
 
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-`;
+export const getServerSideProps = async (context: GetServerSidePropsContext) => {
+  try {
+    const id = context?.params?.id as string;
+    const data = await api.get(`http://localhost:3000//products/${id}`);
 
-const Title = styled.a`
-  font-size: 48px;
-`;
+    return {
+      props: { item: data },
+    };
+  } catch (err: any) {
+    // console.error(err);
+    return {
+      props: { item: {} },
+    };
+  }
+};
 
 const Thumbnail = styled.img`
   width: 100%;

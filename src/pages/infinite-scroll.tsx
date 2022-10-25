@@ -1,24 +1,56 @@
-import Link from 'next/link';
-import type { NextPage } from 'next';
-import React from 'react';
+import type { GetServerSidePropsContext, NextPage } from 'next';
+import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
 
-import products from '../api/data/products.json';
-import ProductList from '../components/ProductList';
+import InfiniteProductList from '../components/InfiniteProductList';
+import Header from 'src/components/Header';
+import useInfinitePage, { InfiniteData } from 'src/category/Product/hooks/useInfinitePage';
 
-const InfiniteScrollPage: NextPage = () => {
+import useLocalStorage from 'use-local-storage';
+import { useObserver } from 'src/lib/hooks/useObserver';
+import { api } from 'src/lib/http';
+import ProductList from 'src/components/ProductList';
+
+import products from '../api/data/products.json';
+
+interface InfiniteScrollProps {
+  initialProducts: InfiniteData;
+}
+
+const InfiniteScrollPage: NextPage<InfiniteScrollProps> = ({ initialProducts }) => {
+  let pageParam = 1;
+  const {
+    data: productInfo,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    isFetchingNextPage,
+    status,
+  } = useInfinitePage(pageParam, initialProducts);
+
+  const bottom = useRef(null);
+  const [scrollY] = useLocalStorage('products_scroll', 0);
+
+  const onIntersect: IntersectionObserverCallback = ([entry]) =>
+    entry.isIntersecting && fetchNextPage();
+
+  useObserver({
+    target: bottom,
+    onIntersect,
+  });
+
+  useEffect(() => {
+    if (scrollY !== 0) window.scrollTo(0, Number(scrollY));
+  }, []);
+
   return (
     <>
-      <Header>
-        <Link href='/'>
-          <Title>HAUS</Title>
-        </Link>
-        <Link href='/login'>
-          <p>login</p>
-        </Link>
-      </Header>
+      <Header />
       <Container>
+        {/* <InfiniteProductList products={productInfo?.pages} /> */}
         <ProductList products={products} />
+        <div ref={bottom} />
       </Container>
     </>
   );
@@ -26,16 +58,20 @@ const InfiniteScrollPage: NextPage = () => {
 
 export default InfiniteScrollPage;
 
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-`;
+export const getServerSideProps = async (context: GetServerSidePropsContext) => {
+  try {
+    const products = await api.get(`http://localhost:3000/products?page=1&size=10`);
 
-const Title = styled.a`
-  font-size: 48px;
-`;
+    return {
+      props: { initialProducts: products },
+    };
+  } catch (err: any) {
+    console.error(err);
+    return {
+      props: { products: {} },
+    };
+  }
+};
 
 const Container = styled.div`
   display: flex;
