@@ -4,17 +4,17 @@ import { Product } from '../types/product';
 import ProductItem from './ProductItem';
 
 export type InfiniteProductListProps = {
-  pages: {
-    data: {
-      products: Product[];
-      totalCount: number;
-    };
+  // pages: {
+  data: {
+    products: Product[];
+    totalCount: number;
   };
+  // };
 };
 
-const ProductList = ({ pages }: InfiniteProductListProps) => (
+const ProductList = ({ data }: InfiniteProductListProps) => (
   <Container>
-    {pages?.data?.products?.map((product) => (
+    {data?.products?.map((product) => (
       <ProductItem key={product.id} product={product} />
     ))}
   </Container>
